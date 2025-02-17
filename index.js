@@ -2,8 +2,26 @@ const http = require("http");
 const { hello, greetings } = require("./helloWorld");
 const moment = require("moment");
 const express = require("express");
+const morgan = require("morgan");
+const errorhandler = require("errorhandler");
 const app = express();
 
+//MIDDLEWEAR nya di atas dari ROUTING
+const log = (req, res, next) => {
+  console.log(
+    moment().format("MMMM Do YYYY, h:mm:ss a") +
+      " " +
+      req.ip +
+      " " +
+      req.originalUrl
+  );
+  next(); //fungsi
+};
+
+app.use(morgan("tiny"));
+app.use(errorhandler); //Errorhandler Middlewear
+
+//ROUTING
 app.get("/", (req, res) => res.send("Hello World"));
 app.get("/about", (req, res) =>
   res.status(200).json({
@@ -25,6 +43,15 @@ app.get("/post/:id", (req, res) => res.send(`Artikel ke - ${req.params.id}`));
 app.get("/post", (req, res) => {
   const { page, sort } = req.query;
   res.send(`Query yang didapatkan adalah, page : ${page}, sort : ${sort}`);
+});
+//Routing sampai di atas sini
+
+//Routing 404 Middlewear//
+app.use((req, res, next) => {
+  res.status(404).json({
+    status: "error",
+    message: "resource tidak ditemukan",
+  });
 });
 
 const hostname = "127.0.0.1";
