@@ -1,37 +1,55 @@
-//EXERCISE 3
-
 const express = require("express");
 const moment = require("moment");
-const { users } = require("./users");
+const morgan = require("morgan");
+const errorhandler = require("errorhandler");
+const users = require("./users");
 
 const app = express();
-const port = 3000;
 
-app.get("/", (req, res) => {
-  res.status(200).send("This is the home page");
-});
+const log = (req, res, next) => {
+  console.log(
+    moment().format("MMMM Do YYYY, h:mm:ss a") +
+      " " +
+      req.ip +
+      " " +
+      req.originalUrl
+  );
+  next(); //fungsi
+};
 
-app.get("/about", (req, res) => {
+// Middleware
+app.use(morgan("tiny"));
+//app.use(errorhandler);
+
+// untuk mendapatkan list data users
+app.get("/users", (req, res) => {
   res.status(200).json({
     status: "success",
-    message: "Response Success",
-    description: "Exercise #03",
-    date: moment().format(),
+    data: users,
   });
 });
 
-app.get("/users", (req, res) => {
-  res.status(200).json(users);
+// 1. Menggunakan params
+app.get("users/:name", (req, res) => res.send(`Name : ${req.params.name}`));
+
+// Routing 404
+app.use((req, res) => {
+  res.status(404).json({
+    status: "error",
+    message: "resource tidak ditemukan",
+  });
 });
 
-// app.get((req, res) => {
-//   res.status(404).json({
-//     status: "not found",
-//     message: "Route tidak ditemukan",
-//     date: moment().format(),
-//   });
-// });
+// Error
+app.use((err, req, res, next) => {
+  res.status(404).json({
+    status: "error",
+    message: "terjadi kesalahan pada server",
+  });
+});
 
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
+const hostname = "127.0.0.1";
+const port = 3000;
+app.listen(port, hostname, () => {
+  console.log(`Server running at http://${hostname}:${port}`);
 });
