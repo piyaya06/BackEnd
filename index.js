@@ -1,11 +1,12 @@
 const express = require("express");
 const moment = require("moment");
 const morgan = require("morgan");
-const errorhandler = require("errorhandler");
-const users = require("./users");
+// const errorhandler = require("errorhandler");
+const { users } = require("./users");
 
 const app = express();
 
+//Middleware Log
 const log = (req, res, next) => {
   console.log(
     moment().format("MMMM Do YYYY, h:mm:ss a") +
@@ -19,9 +20,9 @@ const log = (req, res, next) => {
 
 // Middleware
 app.use(morgan("tiny"));
-//app.use(errorhandler);
+// app.use(errorhandler);
 
-// untuk mendapatkan list data users
+// untuk list data users
 app.get("/users", (req, res) => {
   res.status(200).json({
     status: "success",
@@ -29,10 +30,19 @@ app.get("/users", (req, res) => {
   });
 });
 
-// 1. Menggunakan params
-app.get("users/:name", (req, res) => res.send(`Name : ${req.params.name}`));
+// Route untuk mendapatkan data user berdasarkan nama (case-insensitive)
+app.get("/users/:name", (req, res) => {
+  const name = req.params.name.toLowerCase();
+  const user = users.find((user) => user.name.toLowerCase() === name);
 
-// Routing 404
+  if (user) {
+    res.status(200).json(user);
+  } else {
+    res.status(404).json({ message: "Data users tidak ditemukan" });
+  }
+});
+
+//Penangan Routing 404
 app.use((req, res) => {
   res.status(404).json({
     status: "error",
@@ -40,9 +50,10 @@ app.use((req, res) => {
   });
 });
 
-// Error
+// Untuk menangani Error
 app.use((err, req, res, next) => {
-  res.status(404).json({
+  console.error(err); // Log error ke console
+  res.status(500).json({
     status: "error",
     message: "terjadi kesalahan pada server",
   });
