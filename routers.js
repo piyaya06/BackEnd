@@ -1,7 +1,24 @@
 const express = require("express");
 const routers = express.Router(); //tujuannya agar jika kita akan tambah router nanti akan masuk ke file router
+const path = require("path");
 
 //ROUTING
+// //routing download (cara pendek)
+// routers.get("/download", (req, res) => {
+//   const filename = "logo.png";
+//   res.sendFile(__dirname + "/download/" + filename); //kalau lebih dari 1 foto tidak perlu /download/ langsung filename saja
+// });
+
+// //cara pendek method download
+routers.get("/download", (req, res) => {
+  const filename = "logo.png";
+  res.sendFile(path.join(__dirname, "/download", filename), {
+    headers: {
+      "Content-Disposition": 'attachment; filename="logo.png"',
+    },
+  }); //kalau lebih dari 1 foto tidak perlu /download/ langsung filename saja
+});
+
 routers.post("/login", (req, res) => {
   const { username, password } = req.body;
   res.status(200).json({
