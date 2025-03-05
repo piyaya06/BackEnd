@@ -7,6 +7,7 @@ const morgan = require("morgan");
 const app = express();
 const routers = require("./routers");
 const path = require("path");
+const cors = require("cors"); //Menangani CORS Middleware
 
 //Middleware
 const log = (req, res, next) => {
@@ -21,6 +22,14 @@ app.use(morgan("tiny"));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public"))); //menangani statis file middleware//akses foto tidak perlu router
+app.use(
+  cors({
+    origin: "http://127.0.0.1:5500",
+    methods: ["GET", "PUT"], //izinkan hanya method GET//Spesifikan//kalau dizinkan dari server baru di browser bisa di akses
+  })
+); //CORS middleware
+//Preflight Request ; PUT, DELETE, REQUEST client request ke browser - dan browser akan kirim OPTION ke server
+//Simple Request ; GET, POST
 
 //Routing
 app.use(routers);
