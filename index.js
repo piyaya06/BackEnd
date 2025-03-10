@@ -1,48 +1,26 @@
 const express = require("express");
-const moment = require("moment");
 const morgan = require("morgan");
-// const errorhandler = require("errorhandler");
-const { users } = require("./users");
-
+const cors = require("cors");
+const path = require("path");
+const routers = require("./routers"); // Mengimpor routers.js
 const app = express();
 
-//Middleware Log
-const log = (req, res, next) => {
-  console.log(
-    moment().format("MMMM Do YYYY, h:mm:ss a") +
-      " " +
-      req.ip +
-      " " +
-      req.originalUrl
-  );
-  next(); //fungsi
-};
-
-// Middleware
+// Middleware Log
 app.use(morgan("tiny"));
-// app.use(errorhandler);
 
-// untuk list data users
-app.get("/users", (req, res) => {
-  res.status(200).json({
-    status: "success",
-    data: users,
-  });
-});
+// Middleware Body Parser (JSON)
+app.use(express.json()); // Untuk parsing JSON di request body
 
-// Route untuk mendapatkan data user berdasarkan nama (case-insensitive)
-app.get("/users/:name", (req, res) => {
-  const name = req.params.name.toLowerCase();
-  const user = users.find((user) => user.name.toLowerCase() === name);
+// Middleware CORS
+app.use(cors({ origin: "http://127.0.0.1:5500" })); // Menangani CORS
 
-  if (user) {
-    res.status(200).json(user);
-  } else {
-    res.status(404).json({ message: "Data users tidak ditemukan" });
-  }
-});
+// Middleware untuk Akses File Statis
+app.use(express.static(path.join(__dirname, "public"))); // Akses file statis dari folder 'public'
 
-//Penangan Routing 404
+// Gunakan router.js untuk menangani rute-rute yang ada
+app.use(routers);
+
+// Penanganan Routing 404
 app.use((req, res) => {
   res.status(404).json({
     status: "error",
@@ -50,7 +28,7 @@ app.use((req, res) => {
   });
 });
 
-// Untuk menangani Error
+// Penanganan Error
 app.use((err, req, res, next) => {
   console.error(err); // Log error ke console
   res.status(500).json({
