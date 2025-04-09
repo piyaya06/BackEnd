@@ -4,6 +4,8 @@ const path = require("path");
 const fs = require("fs"); //file upload
 const multer = require("multer"); //file upload
 //const upload = multer({ dest: "public" }); //file upload
+const client = require("./mongodb");
+//ROUTING
 
 //File Upload tapi yang di upload hanya gambar saja
 const imageFilter = (req, file, cb) => {
@@ -14,6 +16,22 @@ const imageFilter = (req, file, cb) => {
 };
 
 const upload = multer({ dest: "public", fileFilter: imageFilter });
+
+routers.get("/users", async (req, res) => {
+  try {
+    const db = client.db("latihan");
+    const users = await db.collection("users").find().toArray();
+    res.json({
+      status: "success",
+      message: "list users",
+      data: users,
+    });
+  } catch (error) {
+    res.json({
+      status: "error",
+    });
+  }
+});
 
 //ROUTING file upload menggunakan multer (boleh upload file, docs, gambar)
 routers.post("/upload", upload.single("file"), (req, res) => {
