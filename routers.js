@@ -5,6 +5,7 @@ const fs = require("fs"); //file upload
 const multer = require("multer"); //file upload
 //const upload = multer({ dest: "public" }); //file upload
 const client = require("./mongodb");
+const ObjectId = require("mongodb").ObjectId;
 //ROUTING
 
 //File Upload tapi yang di upload hanya gambar saja
@@ -17,6 +18,8 @@ const imageFilter = (req, file, cb) => {
 
 const upload = multer({ dest: "public", fileFilter: imageFilter });
 
+//ROUTING CONNECT TO MONGODB
+//Get All Users
 routers.get("/users", async (req, res) => {
   try {
     const db = client.db("latihan");
@@ -25,6 +28,25 @@ routers.get("/users", async (req, res) => {
       status: "success",
       message: "list users",
       data: users,
+    });
+  } catch (error) {
+    res.json({
+      status: "error",
+    });
+  }
+});
+
+//Get Single User
+routers.get("/users/:id", async (req, res) => {
+  try {
+    const db = client.db("latihan");
+    const user = await db.collection("users").findOne({
+      _id: new ObjectId(req.params.id),
+    });
+    res.status(200).json({
+      status: "success",
+      message: "single user",
+      data: user,
     });
   } catch (error) {
     res.json({
