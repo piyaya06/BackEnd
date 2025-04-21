@@ -55,6 +55,163 @@ routers.get("/users/:id", async (req, res) => {
   }
 });
 
+// Routing untuk insert user
+routers.post("/users", async (req, res) => {
+  try {
+    const db = client.db("latihan");
+    const { name, email } = req.body;
+
+    // Validasi input
+    if (!name || !email) {
+      return res.status(400).json({
+        status: "error",
+        message: "Name dan email harus diisi",
+      });
+    }
+
+    // Insert data ke MongoDB
+    const result = await db.collection("users").insertOne({ name, email });
+
+    // Kirim respons sukses
+    res.status(201).json({
+      status: "success",
+      message: "User berhasil ditambahkan",
+      data: result.ops[0],
+    });
+  } catch (error) {
+    // Penanganan error
+    res.status(500).json({
+      status: "error",
+      message: "Terjadi kesalahan saat menambahkan user",
+      error: error.message,
+    });
+  }
+});
+
+// Routing untuk update user berdasarkan ID
+// update user
+routers.patch("/users/:id", async (req, res) => {
+  try {
+    const db = client.db("latihan");
+    const user = await db.collection("users").updateOne(
+      { _id: new ObjectId(req.params.id) },
+      {
+        $set: req.body,
+      }
+    );
+
+    if (user.modifiedCount > 0) {
+      res.status(200).json({
+        status: "success",
+        message: "Update User",
+        data: user,
+      });
+    } else {
+      res.status(404).json({
+        status: "error",
+        message: "User not found or no changes made",
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      message: "Failed to update user",
+    });
+  }
+});
+
+// Routing untuk delete user berdasarkan ID
+routers.delete("/users/:id", async (req, res) => {
+  try {
+    const db = client.db("latihan");
+    const { id } = req.params;
+    const ObjectId = require("mongodb").ObjectId;
+
+    const result = await db
+      .collection("users")
+      .deleteOne({ _id: new ObjectId(id) });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({
+        status: "error",
+        message: "User tidak ditemukan",
+      });
+    }
+
+    res.status(200).json({
+      status: "success",
+      message: "User berhasil dihapus",
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      message: "Terjadi kesalahan saat menghapus user",
+      error: error.message,
+    });
+  }
+});
+
+// Routing untuk mendapatkan order user (join/aggregate)
+routers.get("/order/user/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid user ID",
+      });
+    }
+
+    const db = client.db("latihan");
+
+    const orders = await db
+      .collection("order")
+      .aggregate([
+        {
+          $match: {
+            UserId: new ObjectId(id),
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "UserId",
+            foreignField: "_id",
+            as: "user_info",
+          },
+        },
+        {
+          $unwind: "$user_info",
+        },
+        {
+          $project: {
+            _id: 1,
+            product: 1,
+            price: 1,
+            "user_info._id": 1,
+            "user_info.name": 1,
+            "user_info.age": 1,
+            "user_info.status": 1,
+          },
+        },
+      ])
+      .toArray();
+
+    res.status(200).json({
+      status: "success",
+      message: "Get Order by User",
+      data: orders,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to get order user",
+    });
+  }
+});
+
 //ROUTING file upload menggunakan multer (boleh upload file, docs, gambar)
 routers.post("/upload", upload.single("file"), (req, res) => {
   const file = req.file;
